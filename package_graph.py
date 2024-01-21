@@ -3,7 +3,7 @@ class package_graph():
         self.graph_state = {}
 
     def __repr__(self):
-        stringTostring = ""
+        graph_string = ""
         for key, value in self.graph_state.items():
-            stringTostring += key + ": " + str(value) + "\n"
-        return stringTostring
+            graph_string += key + ": " + str(value) + "\n"
+        return graph_string

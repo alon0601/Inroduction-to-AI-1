@@ -1,7 +1,20 @@
 from package_graph import package_graph
 from package import package
 from edge import edge
+from agent import agent
 import re
+
+
+def normal_agent(next_move):
+    print(next_move)
+
+
+def human_agent(next_move):
+    print(next_move)
+
+
+def interfering_agent(next_move):
+    print(next_move)
 
 
 def parse_file(init_file_path):
@@ -9,6 +22,7 @@ def parse_file(init_file_path):
     packages = list()
     blocked_edges = list()
     fragile_edges = list()
+    agents = list()
     init_file = open(init_file_path, mode='r', encoding='utf-8-sig')
     init_file_lines = init_file.readlines()
     for line in init_file_lines:
@@ -26,8 +40,14 @@ def parse_file(init_file_path):
         elif line[1] == 'F':
             fragile_edges.append(edge(int(all_numbers_in_line[0]), int(all_numbers_in_line[1]), int(all_numbers_in_line[2]),
                                     int(all_numbers_in_line[3])))
-        else:
-            init_graph.graph_state[line[1]] = (int(all_numbers_in_line[0]), int(all_numbers_in_line[1]))
+        elif line[1] == 'A':
+            init_graph.graph_state['Agents'] = agents.append(agent(int(all_numbers_in_line[0]), int(all_numbers_in_line[1]), normal_agent, line[1]))
+        elif line[1] == 'H':
+            init_graph.graph_state['Agents'] = agents.append(
+                agent(int(all_numbers_in_line[0]), int(all_numbers_in_line[1]), human_agent, line[1]))
+        elif line[1] == 'I':
+            init_graph.graph_state['Agents'] = agents.append(
+                agent(int(all_numbers_in_line[0]), int(all_numbers_in_line[1]), interfering_agent, line[1]))
 
     init_graph.graph_state['P'] = packages
     init_graph.graph_state['B'] = blocked_edges
