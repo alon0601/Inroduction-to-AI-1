@@ -41,16 +41,17 @@ def parse_file(init_file_path):
             fragile_edges.append(edge(int(all_numbers_in_line[0]), int(all_numbers_in_line[1]), int(all_numbers_in_line[2]),
                                     int(all_numbers_in_line[3])))
         elif line[1] == 'A':
-            init_graph.graph_state['Agents'] = agents.append(agent(int(all_numbers_in_line[0]), int(all_numbers_in_line[1]), normal_agent, line[1]))
+            agents.append(agent(int(all_numbers_in_line[0]), int(all_numbers_in_line[1]), normal_agent, line[1]))
         elif line[1] == 'H':
-            init_graph.graph_state['Agents'] = agents.append(
+            agents.append(
                 agent(int(all_numbers_in_line[0]), int(all_numbers_in_line[1]), human_agent, line[1]))
         elif line[1] == 'I':
-            init_graph.graph_state['Agents'] = agents.append(
+            agents.append(
                 agent(int(all_numbers_in_line[0]), int(all_numbers_in_line[1]), interfering_agent, line[1]))
 
     init_graph.graph_state['P'] = packages
     init_graph.graph_state['B'] = blocked_edges
+    init_graph.graph_state['Agents'] = agents
 
     return init_graph
 
