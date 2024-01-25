@@ -1,5 +1,5 @@
 from agent import agent
-from main import bfs
+from search import bfs
 
 
 class greedy_agent(agent):
@@ -10,9 +10,9 @@ class greedy_agent(agent):
         print(init_graph)
         #  check if agent has packages, and accordingly deliver or look for a package
         if self.packages:
-            step = bfs((self.X, self.Y), 'D', self.packages)
+            step = bfs((self.X, self.Y), 'D', init_graph, self.packages)
         else:
-            step = bfs((self.X, self.Y), 'P')
+            step = bfs((self.X, self.Y), 'P', init_graph)
 
         if step:
             self.move_request = step
