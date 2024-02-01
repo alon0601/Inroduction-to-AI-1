@@ -23,9 +23,12 @@ class Node:
     def __lt__(self, other):
         return self.h < other.h
 
+    def __repr__(self):
+        return str(self.graph) + ", " + str(self.h) + ", " + str(self.g)
+
 
 def expand(node):
-    if node.graph.graph_state['T']>100: #  change to the undelivered package with earliest time (failed to deliver)
+    if node.graph.graph_state['T'] > 100: #change to the undelivered package with earliest time (failed to deliver)
         return []
 
     successors = []
@@ -76,7 +79,7 @@ def best_first_search(init_state, h):  # we can use the same function for greedy
             return None  # failure
         else:
             node = heapq.heappop(open_nodes)
-
+            print("current node", node)
             # check goal state
             if goal_test(node.graph):
                 return retrieve_path(node)
@@ -99,7 +102,53 @@ def retrieve_path(node):
 
 def h(graph):
     #  dumb heuristic func
-    return len([p for p in graph.graph_state['P'] if not p.picked]) + len(graph.graph_state['P'])
+    mst = {}
+    graph.graph_state['Edge'] = set()
+    number_of_vertex = 0
+    vertex_to_number = {}
+    for agent in graph.graph_state['Agents'].values():
+        if not vertex_to_number.get((agent.X, agent.Y)):
+            vertex_to_number[(agent.X, agent.Y)] = number_of_vertex
+            number_of_vertex += 1
+        agent_vertex = vertex_to_number[(agent.X, agent.Y)]
+        for package in graph.graph_state['P']:
+                if not vertex_to_number.get(package.point):
+                    vertex_to_number[package.point] = number_of_vertex
+                    number_of_vertex += 1
+                if not vertex_to_number.get(package.delivery):
+                    vertex_to_number[package.delivery] = number_of_vertex
+                    number_of_vertex += 1
+                package_p_vertex = vertex_to_number[package.point]
+                package_d_vertex = vertex_to_number[package.delivery]
+                weight = abs(agent.X - package.p_x) + abs(agent.Y - package.p_y)
+                if not (package_p_vertex, agent_vertex, weight) in graph.graph_state['Edge']:
+                    graph.add_edge(agent_vertex, package_p_vertex, weight)
+                    weight = abs(agent.X - package.d_x) + abs(agent.Y - package.d_y)
+                if not (package_d_vertex, agent_vertex, weight) in graph.graph_state['Edge']:
+                    graph.add_edge(agent_vertex, package_d_vertex, weight)
+    package_pairs = [(a, b) for idx, a in enumerate(graph.graph_state['P']) for b in graph.graph_state['P'][idx + 1:]]
+    for package_pair in package_pairs:
+        package_p_vertex_1 = vertex_to_number[package_pair[0].point]
+        package_p_vertex_2 = vertex_to_number[package_pair[1].point]
+        package_d_vertex_1 = vertex_to_number[package_pair[0].delivery]
+        package_d_vertex_2 = vertex_to_number[package_pair[1].delivery]
+        weight_p = abs(package_pair[0].p_x - package_pair[1].p_x) + abs(package_pair[0].p_y - package_pair[1].p_y)
+        if not (package_p_vertex_2, package_p_vertex_1, weight_p) in graph.graph_state['Edge']:
+            graph.add_edge(package_p_vertex_1, vertex_to_number[package_pair[1].point], weight_p)
+        weight_d = abs(package_pair[0].d_x - package_pair[1].d_x) + abs(package_pair[0].d_y - package_pair[1].d_y)
+        if not (package_d_vertex_2, package_d_vertex_1, weight_d) in graph.graph_state['Edge']:
+            graph.add_edge(package_d_vertex_1, package_d_vertex_2, weight_d)
+        if not (package_d_vertex_2, package_p_vertex_1, weight_d) in graph.graph_state['Edge']:
+            graph.add_edge(package_p_vertex_1, package_d_vertex_2, weight_d)
+        if not (package_p_vertex_2, package_d_vertex_1, weight_d) in graph.graph_state['Edge']:
+            graph.add_edge(package_d_vertex_1, package_p_vertex_2, weight_d)
+        if not (package_d_vertex_1, package_p_vertex_1, weight_d) in graph.graph_state['Edge']:
+            graph.add_edge(package_p_vertex_1, package_d_vertex_1, weight_d)
+        if not (package_d_vertex_2, package_p_vertex_2, weight_d) in graph.graph_state['Edge']:
+            graph.add_edge(package_p_vertex_2, package_d_vertex_2, weight_d)
+    graph.graph_state['V'] = list(range(number_of_vertex))
+    return graph.KruskalMST()
+
 
 # f is the distance of the node so far + h
 def f(node):
