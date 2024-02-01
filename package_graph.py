@@ -45,8 +45,6 @@ class package_graph():
                 agents[line[1]] = search_agent(int(all_numbers_in_line[0]), int(all_numbers_in_line[1]))
             elif line[1] == 'R':
                 agents[line[1]] = a_star_agent(int(all_numbers_in_line[0]), int(all_numbers_in_line[1]))
-        self.graph_state['Edge'] = set()
-        self.graph_state['V'] = []
         self.graph_state['P'] = packages
         self.graph_state['B'] = blocked_edges
         self.graph_state['F'] = fragile_edges
@@ -74,3 +72,11 @@ class package_graph():
         for key, value in self.graph_state.items():
             graph_string += key + ": " + str(value) + "\n"
         return graph_string
+
+    def __eq__(self, other):
+        return (
+                self.graph_state['P'] == other.graph_state['P']
+                and self.graph_state['B'] == other.graph_state['B']
+                and self.graph_state['F'] == other.graph_state['F']
+                and self.graph_state['Agents'] == other.graph_state['Agents']
+        )

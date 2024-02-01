@@ -11,3 +11,10 @@ class agent():
 
     def __repr__(self):
         return "x :" + str(self.X) + ", y :" + str(self.Y) + ", score :" + str(self.Score) + "\n"
+
+    def __eq__(self, other):
+        return (
+                self.X == other.X
+                and self.Y == other.Y
+                and self.packages == other.packages
+        )

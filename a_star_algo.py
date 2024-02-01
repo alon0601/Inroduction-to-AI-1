@@ -75,11 +75,11 @@ def expand(node):
 
 def best_first_search(init_state, h):  # we can use the same function for greedy search and A* by giving h or h+g
     global number_of_expan
-    limit = 10
+    limit = 3000000
     init_node = Node(init_state, h(init_state))
     open_nodes = [init_node]
     close = []
-    while limit:
+    while limit > 0:
         if not open_nodes:
             return None  # failure
         else:
@@ -87,17 +87,17 @@ def best_first_search(init_state, h):  # we can use the same function for greedy
             # check goal state
             if goal_test(node.graph):
                 return retrieve_path(node)
-            equal_state = list(filter(lambda other_node: other_node.graph.graph_state == node.graph.graph_state, open_nodes))
+            equal_state = list(filter(lambda other_node: other_node.graph == node.graph, close))
             need_to_expand = False
             if len(equal_state) == 0:
                 heapq.heappush(close, node)
                 need_to_expand = True
             elif len(equal_state) >= 1:
-                need_to_expand = True
                 for other_node in equal_state:
                     if other_node > node:
                         close.remove(other_node)
                         heapq.heappush(close, node)
+                        need_to_expand = True
             if need_to_expand:
                 successors = expand(node)
                 limit -= number_of_expan
