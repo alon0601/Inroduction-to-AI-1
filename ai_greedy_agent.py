@@ -2,6 +2,7 @@ import copy
 import heapq
 from edge import edge
 from agent import agent
+from graph_grid import grid_to_graph, create_distance_graph, kruskal
 
 
 class search_agent(agent):
@@ -24,7 +25,7 @@ class Node:
         return self.h < other.h
 
     def __repr__(self):
-        return str(self.graph) + ", " + str(self.h) + ", " + str(self.g)
+        return str(self.graph) + ", h: " + str(self.h) + ",g: " + str(self.g)
 
 
 def expand(node):
@@ -40,7 +41,7 @@ def expand(node):
         next_move = None
         if move == 'R':
             next_move = edge(current_x + 1, current_y, current_x, current_y)
-            if current_x + 1 > new_node.graph.graph_state['X'] or next_move in new_node.graph.graph_state['B']:
+            if current_x + 1 >= new_node.graph.graph_state['X'] or next_move in new_node.graph.graph_state['B']:
                 continue
             new_node.graph.graph_state["Agents"]['S'].X += 1
         if move == 'L':
@@ -50,7 +51,7 @@ def expand(node):
             new_node.graph.graph_state["Agents"]['S'].X -= 1
         if move == 'U':
             next_move = edge(current_x, current_y + 1, current_x, current_y)
-            if current_y + 1 > new_node.graph.graph_state['Y'] or next_move in new_node.graph.graph_state['B']:
+            if current_y + 1 >= new_node.graph.graph_state['Y'] or next_move in new_node.graph.graph_state['B']:
                 continue
             new_node.graph.graph_state["Agents"]['S'].Y += 1
         if move == 'D':
@@ -79,7 +80,6 @@ def best_first_search(init_state, h):  # we can use the same function for greedy
             return None  # failure
         else:
             node = heapq.heappop(open_nodes)
-            print("current node", node)
             # check goal state
             if goal_test(node.graph):
                 return retrieve_path(node)
@@ -102,52 +102,17 @@ def retrieve_path(node):
 
 def h(graph):
     #  dumb heuristic func
-    mst = {}
-    graph.graph_state['Edge'] = set()
-    number_of_vertex = 0
-    vertex_to_number = {}
-    for agent in graph.graph_state['Agents'].values():
-        if not vertex_to_number.get((agent.X, agent.Y)):
-            vertex_to_number[(agent.X, agent.Y)] = number_of_vertex
-            number_of_vertex += 1
-        agent_vertex = vertex_to_number[(agent.X, agent.Y)]
-        for package in graph.graph_state['P']:
-                if not vertex_to_number.get(package.point):
-                    vertex_to_number[package.point] = number_of_vertex
-                    number_of_vertex += 1
-                if not vertex_to_number.get(package.delivery):
-                    vertex_to_number[package.delivery] = number_of_vertex
-                    number_of_vertex += 1
-                package_p_vertex = vertex_to_number[package.point]
-                package_d_vertex = vertex_to_number[package.delivery]
-                weight = abs(agent.X - package.p_x) + abs(agent.Y - package.p_y)
-                if not (package_p_vertex, agent_vertex, weight) in graph.graph_state['Edge']:
-                    graph.add_edge(agent_vertex, package_p_vertex, weight)
-                    weight = abs(agent.X - package.d_x) + abs(agent.Y - package.d_y)
-                if not (package_d_vertex, agent_vertex, weight) in graph.graph_state['Edge']:
-                    graph.add_edge(agent_vertex, package_d_vertex, weight)
-    package_pairs = [(a, b) for idx, a in enumerate(graph.graph_state['P']) for b in graph.graph_state['P'][idx + 1:]]
-    for package_pair in package_pairs:
-        package_p_vertex_1 = vertex_to_number[package_pair[0].point]
-        package_p_vertex_2 = vertex_to_number[package_pair[1].point]
-        package_d_vertex_1 = vertex_to_number[package_pair[0].delivery]
-        package_d_vertex_2 = vertex_to_number[package_pair[1].delivery]
-        weight_p = abs(package_pair[0].p_x - package_pair[1].p_x) + abs(package_pair[0].p_y - package_pair[1].p_y)
-        if not (package_p_vertex_2, package_p_vertex_1, weight_p) in graph.graph_state['Edge']:
-            graph.add_edge(package_p_vertex_1, vertex_to_number[package_pair[1].point], weight_p)
-        weight_d = abs(package_pair[0].d_x - package_pair[1].d_x) + abs(package_pair[0].d_y - package_pair[1].d_y)
-        if not (package_d_vertex_2, package_d_vertex_1, weight_d) in graph.graph_state['Edge']:
-            graph.add_edge(package_d_vertex_1, package_d_vertex_2, weight_d)
-        if not (package_d_vertex_2, package_p_vertex_1, weight_d) in graph.graph_state['Edge']:
-            graph.add_edge(package_p_vertex_1, package_d_vertex_2, weight_d)
-        if not (package_p_vertex_2, package_d_vertex_1, weight_d) in graph.graph_state['Edge']:
-            graph.add_edge(package_d_vertex_1, package_p_vertex_2, weight_d)
-        if not (package_d_vertex_1, package_p_vertex_1, weight_d) in graph.graph_state['Edge']:
-            graph.add_edge(package_p_vertex_1, package_d_vertex_1, weight_d)
-        if not (package_d_vertex_2, package_p_vertex_2, weight_d) in graph.graph_state['Edge']:
-            graph.add_edge(package_p_vertex_2, package_d_vertex_2, weight_d)
-    graph.graph_state['V'] = list(range(number_of_vertex))
-    return graph.KruskalMST()
+    graph_grid = grid_to_graph(graph.graph_state['X'], graph.graph_state['Y'])
+    important_points = [(agent.X, agent.Y) for agent in graph.graph_state['Agents'].values()] + list(map(lambda pack: pack.point, list(filter(lambda p: not p.picked, graph.graph_state['P'])))) + [package.delivery for package in graph.graph_state['P']]
+    distances = []
+    for i in range(len(important_points)):
+        for j in range(i + 1,len(important_points)):
+            distances.append((important_points[i], important_points[j], len(dijkstra(graph_grid, important_points[i], important_points[j])) - 1))
+
+    graph_grid = create_distance_graph(distances)
+    graph_grid = kruskal(graph_grid)
+    h_value = sum(map(lambda x: x[2], graph_grid))
+    return h_value
 
 
 # f is the distance of the node so far + h

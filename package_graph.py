@@ -87,8 +87,6 @@ class package_graph():
             parent[yroot] = xroot
             rank[xroot] += 1
 
-    # The main function to construct MST
-    # using Kruskal's algorithm
     def KruskalMST(self):
         # This will store the resultant MST
         result = []
