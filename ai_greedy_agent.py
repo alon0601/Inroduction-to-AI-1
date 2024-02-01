@@ -2,7 +2,7 @@ import copy
 import heapq
 from edge import edge
 from agent import agent
-from graph_grid import grid_to_graph, create_distance_graph, kruskal
+from graph_grid import grid_to_graph, create_distance_graph, kruskal,dijkstra
 
 
 class search_agent(agent):
@@ -95,7 +95,7 @@ def goal_test(state):
 def retrieve_path(node):
     path = []
     while node:
-        path.insert(0, (node.graph.graph_state["Agents"]['S'].X, node.graph.graph_state["Agents"]['S'].Y))
+        path.insert(0, (node.graph.graph_state["Agents"]['S'].X, node.graph.graph_state["Agents"]['S'].Y, node.h))
         node = node.prev
     return path
 

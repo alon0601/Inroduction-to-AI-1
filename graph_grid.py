@@ -91,6 +91,7 @@ class DisjointSet:
             self.parent[x] = self.find(self.parent[x])
         return self.parent[x]
 
+
 def kruskal(graph):
     edges = []
     nodes = set()
