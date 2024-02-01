@@ -40,7 +40,7 @@ if __name__ == '__main__':
     pancake_input = "4,2,3,1"
     init_graph = package_graph("test2")
     time = 0
-    init_graph.graph_state['Agents']['S'].act(init_graph)
+    init_graph.graph_state['Agents']['R'].act(init_graph)
     # while True:
     #     for agent in init_graph.graph_state['Agents'].values():
     #         agent.act(init_graph)

@@ -4,6 +4,7 @@ from human_agent import human_agent
 from interfering_agent import interfering_agent
 from greedy_agent import greedy_agent
 from ai_greedy_agent import search_agent
+from a_star_algo import a_star_agent
 import re
 
 
@@ -42,6 +43,8 @@ class package_graph():
                 agents[line[1]] = interfering_agent(int(all_numbers_in_line[0]), int(all_numbers_in_line[1]))
             elif line[1] == 'S':
                 agents[line[1]] = search_agent(int(all_numbers_in_line[0]), int(all_numbers_in_line[1]))
+            elif line[1] == 'R':
+                agents[line[1]] = a_star_agent(int(all_numbers_in_line[0]), int(all_numbers_in_line[1]))
         self.graph_state['Edge'] = set()
         self.graph_state['V'] = []
         self.graph_state['P'] = packages
@@ -65,76 +68,6 @@ class package_graph():
                     print("a package has been delivered!")
 
         self.graph_state['P'] = [package for package in packages if package not in packages_that_delivered]
-
-    def add_edge(self, u, v, w):
-        self.graph_state['Edge'].add((u, v, w))
-
-    # A utility function to find set of an element i
-    # (truly uses path compression technique)
-    def find(self, parent, i):
-        if parent[i] == i:
-            return i
-        return self.find(parent, parent[i])
-
-    def apply_union(self, parent, rank, x, y):
-        xroot = self.find(parent, x)
-        yroot = self.find(parent, y)
-        if rank[xroot] < rank[yroot]:
-            parent[xroot] = yroot
-        elif rank[xroot] > rank[yroot]:
-            parent[yroot] = xroot
-        else:
-            parent[yroot] = xroot
-            rank[xroot] += 1
-
-    def KruskalMST(self):
-        # This will store the resultant MST
-        result = []
-
-        # An index variable, used for sorted edges
-        i = 0
-
-        # An index variable, used for result[]
-        e = 0
-
-        # Sort all the edges in
-        # non-decreasing order of their
-        # weight
-        edge_list = sorted(list(self.graph_state['Edge']), key=lambda item: item[2])
-
-        parent = []
-        rank = []
-
-        # Create V subsets with single elements
-        for node in range(len(self.graph_state['V'])):
-            parent.append(node)
-            rank.append(0)
-
-            # Number of edges to be taken is less than to V-1
-        while e < len(self.graph_state['V']) - 1:
-
-            # Pick the smallest edge and increment
-            # the index for next iteration
-            u, v, w = edge_list[i]
-            i = i + 1
-            x = self.find(parent, u)
-            y = self.find(parent, v)
-
-            # If including this edge doesn't
-            # cause cycle, then include it in result
-            # and increment the index of result
-            # for next edge
-            if x != y:
-                e = e + 1
-                result.append([u, v, w])
-                self.apply_union(parent, rank, x, y)
-                # Else discard the edge
-
-        minimumCost = 0
-        for u, v, weight in result:
-            minimumCost += weight
-        print("Minimum Spanning Tree cost: ", minimumCost)
-        return minimumCost
 
     def __repr__(self):
         graph_string = ""
