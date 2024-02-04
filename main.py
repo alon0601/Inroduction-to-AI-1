@@ -36,14 +36,10 @@ def move_agents():
 
 
 if __name__ == '__main__':
-    goal_state = "4,3,2,1"
-    pancake_input = "4,2,3,1"
     init_graph = package_graph("test2")
-    time = 0
-    init_graph.graph_state['Agents']['R'].act(init_graph)
-    # while True:
-    #     for agent in init_graph.graph_state['Agents'].values():
-    #         agent.act(init_graph)
-    #     move_agents()
-    #     init_graph.graph_state['T'] += 1
-    #     print(init_graph)
+    while init_graph.graph_state['P']:
+        for agent in init_graph.graph_state['Agents'].values():
+            agent.act(init_graph)
+        move_agents()
+        init_graph.graph_state['T'] += 1
+        print(init_graph)

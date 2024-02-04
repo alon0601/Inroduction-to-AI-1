@@ -5,6 +5,7 @@ from interfering_agent import interfering_agent
 from greedy_agent import greedy_agent
 from ai_greedy_agent import search_agent
 from a_star_algo import a_star_agent
+from real_time_a_star import rta_agent
 import re
 
 
@@ -45,6 +46,8 @@ class package_graph():
                 agents[line[1]] = search_agent(int(all_numbers_in_line[0]), int(all_numbers_in_line[1]))
             elif line[1] == 'R':
                 agents[line[1]] = a_star_agent(int(all_numbers_in_line[0]), int(all_numbers_in_line[1]))
+            elif line[1] == 'D':
+                agents[line[1]] = rta_agent(int(all_numbers_in_line[0]), int(all_numbers_in_line[1]))
         self.graph_state['P'] = packages
         self.graph_state['B'] = blocked_edges
         self.graph_state['F'] = fragile_edges
@@ -59,11 +62,9 @@ class package_graph():
             for package in packages:
                 if not package.picked and age_value.X == package.p_x and age_value.Y == package.p_y and self.graph_state['T'] >= package.p_time:
                     package.picked = True
-                    print("a package has been picked!")
                     age_value.packages.append(package)
                 elif package.picked and package in age_value.packages and age_value.X == package.d_x and age_value.Y == package.d_y and self.graph_state['T'] <= package.d_time:
                     packages_that_delivered.add(package)
-                    print("a package has been delivered!")
 
         self.graph_state['P'] = [package for package in packages if package not in packages_that_delivered]
 

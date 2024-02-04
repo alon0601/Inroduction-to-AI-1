@@ -27,5 +27,5 @@ class package():
 
 
     def __repr__(self):
-        return ("p_x :" + str(self.p_x) + ", p_y :" + str(self.p_y) + ", p_time :"
-                + str(self.p_time) + ", d_x :" + str(self.d_x) + ", d_y :" + str(self.d_y) + ", d_time :" + str(self.d_time) + "\n")
+        return ("p_x: " + str(self.p_x) + ", p_y: " + str(self.p_y) + ", p_time: "
+                + str(self.p_time) + ", d_x: " + str(self.d_x) + ", d_y: " + str(self.d_y) + ", d_time: " + str(self.d_time) + ", picked: "+str(self.picked)+"\n")

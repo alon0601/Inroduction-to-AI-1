@@ -8,17 +8,21 @@ from graph_grid import grid_to_graph, create_distance_graph, kruskal,dijkstra
 class search_agent(agent):
     def __init__(self, x, y):
         super().__init__(x, y)
+        self.path = None
+        self.move_count = 0
 
     def act(self, init_graph):
-        print(best_first_search(init_graph, h))
-        # print(init_graph)
+        if not self.path:
+            self.path = best_first_search(init_graph, h)
+        if len(self.path) >= 2:
+            self.move_count = max(self.move_count+1, len(self.path) - 1)
+            self.move_request = self.path[self.move_count]
 
 
 class Node:
-    def __init__(self, graph, h, g=0):
+    def __init__(self, graph, h):
         self.graph = graph
         self.h = h
-        self.g = g
         self.prev = None
 
     def __lt__(self, other):
@@ -29,8 +33,10 @@ class Node:
 
 
 def expand(node):
-    if node.graph.graph_state['T'] > 100: #change to the undelivered package with earliest time (failed to deliver)
-        return []
+    # do not expand further if some undelivered package is overdue
+    for package in node.graph.graph_state['P']:
+        if node.graph.graph_state['T'] > package.d_time:
+            return []
 
     successors = []
     possible_moves = ["R", "U", "D", "L"]
@@ -64,28 +70,38 @@ def expand(node):
             new_node.graph.graph_state['B'].append(next_move)
         new_node.prev = node
         new_node.graph.graph_state['T'] += 1
-        new_node.g = node.g + 1
-        new_node.h = h(new_node.graph)
         new_node.graph.pick_up_package()
+        new_node.h = h(new_node.graph)
         successors.append(new_node)
     return successors
 
 
-def best_first_search(init_state, h):  # we can use the same function for greedy search and A* by giving h or h+g
+def best_first_search(init_state, h):
     init_node = Node(init_state, h(init_state))
     open_nodes = [init_node]
-    # close = []
+    close = []
     while True:
         if not open_nodes:
             return None  # failure
         else:
             node = heapq.heappop(open_nodes)
-            # check goal state
             if goal_test(node.graph):
                 return retrieve_path(node)
-            successors = expand(node)
-            for successor in successors:
-                heapq.heappush(open_nodes, successor)
+            equal_state = list(filter(lambda other_node: other_node.graph == node.graph, close))
+            need_to_expand = False
+            if len(equal_state) == 0:
+                heapq.heappush(close, node)
+                need_to_expand = True
+            elif len(equal_state) >= 1:
+                for other_node in equal_state:
+                    if other_node > node:
+                        close.remove(other_node)
+                        heapq.heappush(close, node)
+                        need_to_expand = True
+            if need_to_expand:
+                successors = expand(node)
+                for successor in successors:
+                    heapq.heappush(open_nodes, successor)
 
 
 def goal_test(state):
@@ -101,20 +117,14 @@ def retrieve_path(node):
 
 
 def h(graph):
-    #  dumb heuristic func
-    graph_grid = grid_to_graph(graph.graph_state['X'], graph.graph_state['Y'])
-    important_points = [(agent.X, agent.Y) for agent in graph.graph_state['Agents'].values()] + list(map(lambda pack: pack.point, list(filter(lambda p: not p.picked, graph.graph_state['P'])))) + [package.delivery for package in graph.graph_state['P']]
+    graph_grid = grid_to_graph(graph.graph_state['X']+1, graph.graph_state['Y']+1)
+    important_points = [(graph.graph_state['Agents']['S'].X, graph.graph_state['Agents']['S'].Y)] + list(map(lambda pack: pack.point, list(filter(lambda p: not p.picked, graph.graph_state['P'])))) + [package.delivery for package in graph.graph_state['P']]
     distances = []
     for i in range(len(important_points)):
-        for j in range(i + 1,len(important_points)):
+        for j in range(i + 1, len(important_points)):
             distances.append((important_points[i], important_points[j], len(dijkstra(graph_grid, important_points[i], important_points[j])) - 1))
 
     graph_grid = create_distance_graph(distances)
     graph_grid = kruskal(graph_grid)
     h_value = sum(map(lambda x: x[2], graph_grid))
     return h_value
-
-
-# f is the distance of the node so far + h
-def f(node):
-    return node.g + node.h

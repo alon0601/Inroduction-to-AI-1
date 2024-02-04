@@ -100,7 +100,7 @@ def kruskal(graph):
         for neighbor, weight in graph[node].items():
             nodes.add(neighbor)
             edges.append((node, neighbor, weight['weight']))
-    edges = sorted(edges, key=lambda item: item[2]) # Sort edges by weight
+    edges = sorted(edges, key=lambda item: item[2])  # Sort edges by weight
 
     mst_edges = []
     disjoint_set = DisjointSet(nodes)

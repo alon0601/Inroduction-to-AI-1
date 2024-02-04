@@ -4,15 +4,20 @@ import heapq
 from edge import edge
 from agent import agent
 
-number_of_expan = 0
+num_of_expands = None
 
 class a_star_agent(agent):
     def __init__(self, x, y):
         super().__init__(x, y)
+        self.path = None
+        self.move_count = 0
 
     def act(self, init_graph):
-        print(best_first_search(init_graph, h))
-        # print(init_graph)
+        if not self.path:
+            self.path = best_first_search(init_graph, h)
+        if len(self.path) >= 2:
+            self.move_count = min(self.move_count+1, len(self.path) - 1)
+            self.move_request = self.path[self.move_count]
 
 
 class Node:
@@ -30,9 +35,12 @@ class Node:
 
 
 def expand(node):
-    global number_of_expan
-    if node.graph.graph_state['T'] > 100: #change to the undelivered package with earliest time (failed to deliver)
-        return []
+    global num_of_expands
+    # do not expand further if some undelivered package is overdue
+    for package in node.graph.graph_state['P']:
+        if node.graph.graph_state['T'] > package.d_time:
+            return []
+
     successors = []
     possible_moves = ["R", "U", "D", "L"]
     for move in possible_moves:
@@ -66,25 +74,25 @@ def expand(node):
         new_node.prev = node
         new_node.graph.graph_state['T'] += 1
         new_node.g = node.g + 1
-        new_node.h = h(new_node.graph)
         new_node.graph.pick_up_package()
+        new_node.h = h(new_node.graph)
         successors.append(new_node)
-    number_of_expan += len(successors)
+    num_of_expands += len(successors)
     return successors
 
 
-def best_first_search(init_state, h):  # we can use the same function for greedy search and A* by giving h or h+g
-    global number_of_expan
+def best_first_search(init_state, h):
+    global num_of_expands
+    num_of_expands = 0
     limit = 3000000
     init_node = Node(init_state, h(init_state))
     open_nodes = [init_node]
     close = []
-    while limit > 0:
+    while limit > num_of_expands:
         if not open_nodes:
             return None  # failure
         else:
             node = heapq.heappop(open_nodes)
-            # check goal state
             if goal_test(node.graph):
                 return retrieve_path(node)
             equal_state = list(filter(lambda other_node: other_node.graph == node.graph, close))
@@ -100,10 +108,10 @@ def best_first_search(init_state, h):  # we can use the same function for greedy
                         need_to_expand = True
             if need_to_expand:
                 successors = expand(node)
-                limit -= number_of_expan
                 for successor in successors:
                     heapq.heappush(open_nodes, successor)
     return "pass limit expansion"
+
 
 def goal_test(state):
     return not state.graph_state['P']
@@ -118,12 +126,11 @@ def retrieve_path(node):
 
 
 def h(graph):
-    #  dumb heuristic func
-    graph_grid = grid_to_graph(graph.graph_state['X'], graph.graph_state['Y'])
-    important_points = [(agent.X, agent.Y) for agent in graph.graph_state['Agents'].values()] + list(map(lambda pack: pack.point, list(filter(lambda p: not p.picked, graph.graph_state['P'])))) + [package.delivery for package in graph.graph_state['P']]
+    graph_grid = grid_to_graph(graph.graph_state['X']+1, graph.graph_state['Y']+1)
+    important_points = [(graph.graph_state['Agents']['R'].X, graph.graph_state['Agents']['R'].Y)] + list(map(lambda pack: pack.point, list(filter(lambda p: not p.picked, graph.graph_state['P'])))) + [package.delivery for package in graph.graph_state['P']]
     distances = []
     for i in range(len(important_points)):
-        for j in range(i + 1,len(important_points)):
+        for j in range(i + 1, len(important_points)):
             distances.append((important_points[i], important_points[j], len(dijkstra(graph_grid, important_points[i], important_points[j])) - 1))
 
     graph_grid = create_distance_graph(distances)
