@@ -7,3 +7,5 @@
 #B 2 2 2 3          ; Edge from (2,2) to (2,3) is always blocked
 #F 0 0 0 1          ; Edge from (0,0) to (0,1) is fragile (can only be traversed once)
 #R 1 0              ; Greedy search agent (see below) starts at (1,1)
+#R 3 0             ; Greedy search agent (see below) starts at (1,1)
+#D 0 2              ; RTA agent (see below) starts at (1,1)

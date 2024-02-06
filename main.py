@@ -36,7 +36,8 @@ def move_agents():
 
 
 if __name__ == '__main__':
-    init_graph = package_graph("test2")
+    test_file = input("Please Enter your test file name: ")
+    init_graph = package_graph(test_file)
     while init_graph.graph_state['P']:
         for agent in init_graph.graph_state['Agents'].values():
             agent.act(init_graph)

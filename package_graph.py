@@ -65,6 +65,7 @@ class package_graph():
                     age_value.packages.append(package)
                 elif package.picked and package in age_value.packages and age_value.X == package.d_x and age_value.Y == package.d_y and self.graph_state['T'] <= package.d_time:
                     packages_that_delivered.add(package)
+                    age_value.Score += 1
 
         self.graph_state['P'] = [package for package in packages if package not in packages_that_delivered]
 

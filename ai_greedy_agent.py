@@ -1,8 +1,6 @@
-import copy
+from ai_global_functions import *
 import heapq
-from edge import edge
 from agent import agent
-from graph_grid import grid_to_graph, create_distance_graph, kruskal,dijkstra
 
 
 class search_agent(agent):
@@ -15,7 +13,7 @@ class search_agent(agent):
         if not self.path:
             self.path = best_first_search(init_graph, h)
         if len(self.path) >= 2:
-            self.move_count = max(self.move_count+1, len(self.path) - 1)
+            self.move_count = min(self.move_count+1, len(self.path) - 1)
             self.move_request = self.path[self.move_count]
 
 
@@ -23,6 +21,7 @@ class Node:
     def __init__(self, graph, h):
         self.graph = graph
         self.h = h
+        self.g = 0
         self.prev = None
 
     def __lt__(self, other):
@@ -30,50 +29,6 @@ class Node:
 
     def __repr__(self):
         return str(self.graph) + ", h: " + str(self.h) + ",g: " + str(self.g)
-
-
-def expand(node):
-    # do not expand further if some undelivered package is overdue
-    for package in node.graph.graph_state['P']:
-        if node.graph.graph_state['T'] > package.d_time:
-            return []
-
-    successors = []
-    possible_moves = ["R", "U", "D", "L"]
-    for move in possible_moves:
-        new_node = copy.deepcopy(node)
-        current_x = new_node.graph.graph_state["Agents"]['S'].X
-        current_y = new_node.graph.graph_state["Agents"]['S'].Y
-        next_move = None
-        if move == 'R':
-            next_move = edge(current_x + 1, current_y, current_x, current_y)
-            if current_x + 1 >= new_node.graph.graph_state['X'] or next_move in new_node.graph.graph_state['B']:
-                continue
-            new_node.graph.graph_state["Agents"]['S'].X += 1
-        if move == 'L':
-            next_move = edge(current_x - 1, current_y, current_x, current_y)
-            if current_x - 1 < 0 or next_move in new_node.graph.graph_state['B']:
-                continue
-            new_node.graph.graph_state["Agents"]['S'].X -= 1
-        if move == 'U':
-            next_move = edge(current_x, current_y + 1, current_x, current_y)
-            if current_y + 1 >= new_node.graph.graph_state['Y'] or next_move in new_node.graph.graph_state['B']:
-                continue
-            new_node.graph.graph_state["Agents"]['S'].Y += 1
-        if move == 'D':
-            next_move = edge(current_x, current_y - 1, current_x, current_y)
-            if current_y - 1 < 0 or next_move in new_node.graph.graph_state['B']:
-                continue
-            new_node.graph.graph_state["Agents"]['S'].Y -= 1
-        if next_move in new_node.graph.graph_state['F']:
-            new_node.graph.graph_state['F'].remove(next_move)
-            new_node.graph.graph_state['B'].append(next_move)
-        new_node.prev = node
-        new_node.graph.graph_state['T'] += 1
-        new_node.graph.pick_up_package()
-        new_node.h = h(new_node.graph)
-        successors.append(new_node)
-    return successors
 
 
 def best_first_search(init_state, h):
@@ -86,7 +41,7 @@ def best_first_search(init_state, h):
         else:
             node = heapq.heappop(open_nodes)
             if goal_test(node.graph):
-                return retrieve_path(node)
+                return retrieve_path(node, 'S')
             equal_state = list(filter(lambda other_node: other_node.graph == node.graph, close))
             need_to_expand = False
             if len(equal_state) == 0:
@@ -99,32 +54,7 @@ def best_first_search(init_state, h):
                         heapq.heappush(close, node)
                         need_to_expand = True
             if need_to_expand:
-                successors = expand(node)
+                successors = expand(node, 'S')
                 for successor in successors:
                     heapq.heappush(open_nodes, successor)
 
-
-def goal_test(state):
-    return not state.graph_state['P']
-
-
-def retrieve_path(node):
-    path = []
-    while node:
-        path.insert(0, (node.graph.graph_state["Agents"]['S'].X, node.graph.graph_state["Agents"]['S'].Y, node.h))
-        node = node.prev
-    return path
-
-
-def h(graph):
-    graph_grid = grid_to_graph(graph.graph_state['X']+1, graph.graph_state['Y']+1)
-    important_points = [(graph.graph_state['Agents']['S'].X, graph.graph_state['Agents']['S'].Y)] + list(map(lambda pack: pack.point, list(filter(lambda p: not p.picked, graph.graph_state['P'])))) + [package.delivery for package in graph.graph_state['P']]
-    distances = []
-    for i in range(len(important_points)):
-        for j in range(i + 1, len(important_points)):
-            distances.append((important_points[i], important_points[j], len(dijkstra(graph_grid, important_points[i], important_points[j])) - 1))
-
-    graph_grid = create_distance_graph(distances)
-    graph_grid = kruskal(graph_grid)
-    h_value = sum(map(lambda x: x[2], graph_grid))
-    return h_value
