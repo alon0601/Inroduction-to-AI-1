@@ -45,9 +45,15 @@ class package_graph():
             elif line[1] == 'S':
                 agents[line[1]] = search_agent(int(all_numbers_in_line[0]), int(all_numbers_in_line[1]))
             elif line[1] == 'R':
-                agents[line[1]] = a_star_agent(int(all_numbers_in_line[0]), int(all_numbers_in_line[1]))
+                limit = 10000
+                if len(all_numbers_in_line) > 2:
+                    limit = int(all_numbers_in_line[2])
+                agents[line[1]] = a_star_agent(int(all_numbers_in_line[0]), int(all_numbers_in_line[1]), limit)
             elif line[1] == 'D':
-                agents[line[1]] = rta_agent(int(all_numbers_in_line[0]), int(all_numbers_in_line[1]))
+                limit = 10
+                if len(all_numbers_in_line) > 2:
+                    limit = int(all_numbers_in_line[2])
+                agents[line[1]] = rta_agent(int(all_numbers_in_line[0]), int(all_numbers_in_line[1]), limit)
         self.graph_state['P'] = packages
         self.graph_state['B'] = blocked_edges
         self.graph_state['F'] = fragile_edges

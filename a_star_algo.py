@@ -6,15 +6,18 @@ num_of_expands = None
 
 
 class a_star_agent(agent):
-    def __init__(self, x, y):
+    def __init__(self, x, y, limit):
         super().__init__(x, y)
         self.path = None
+        self.limit = limit
         self.move_count = 0
 
     def act(self, init_graph):
         if not self.path:
-            self.path = best_first_search(init_graph, h)
-        if len(self.path) >= 2:
+            self.path = best_first_search(init_graph, h, self.limit)
+        if self.path == "fail":
+            self.move_request = (self.X, self.Y)
+        elif len(self.path) >= 2:
             self.move_count = min(self.move_count+1, len(self.path) - 1)
             self.move_request = self.path[self.move_count]
 
@@ -33,7 +36,7 @@ class Node:
         return str(self.graph) + ", h: " + str(self.h) + ",g: " + str(self.g)
 
 
-def best_first_search(init_state, h, limit=10000):
+def best_first_search(init_state, h, limit):
     global num_of_expands
     num_of_expands = 0
     init_node = Node(init_state, h(init_state))
@@ -45,6 +48,7 @@ def best_first_search(init_state, h, limit=10000):
         else:
             node = heapq.heappop(open_nodes)
             if goal_test(node.graph):
+                print("number of total expand is :", num_of_expands)
                 return retrieve_path(node, 'R')
             equal_state = list(filter(lambda other_node: other_node.graph == node.graph, close))
             need_to_expand = False
@@ -62,4 +66,4 @@ def best_first_search(init_state, h, limit=10000):
                 num_of_expands += len(successors)
                 for successor in successors:
                     heapq.heappush(open_nodes, successor)
-    return "pass limit expansion"
+    return "fail"
